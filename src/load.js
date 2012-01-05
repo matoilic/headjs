@@ -1,11 +1,14 @@
 /**
-    Head JS     The only script in your <HEAD>
-    Copyright   Tero Piirainen (tipiirai)
-    License     MIT / http://bit.ly/mit-license
-    Version     0.96
-
-    http://headjs.com
-*/
+ * Head JS extended, the only script in your <HEAD>
+ *
+ * @version v0.10.0
+ * @author Mato Ilic <info@matoilic.ch>
+ * @author Tero Piirainen (tipiirai)
+ * @copyright 2012 Mato Ilic, Tero Piirainen
+ *
+ * Licensed under the MIT license:
+ * http://www.opensource.org/licenses/mit-license.php
+ */
 (function(doc) {
 
     var head = doc.documentElement,
@@ -15,7 +18,8 @@
         queue = [],        // waiters for the "head ready" event
         handlers = {},     // user functions waiting for events
         scripts = {},      // loadable scripts in different states
-        isAsync = doc.createElement("script").async === true || "MozAppearance" in doc.documentElement.style || window.opera;
+        isAsync = doc.createElement("script").async === true || "MozAppearance" in doc.documentElement.style || window.opera,
+        stylesheet = /\.css(\?[0-9]+)?/i;
 
 
     /*** public API ***/
@@ -32,7 +36,7 @@
     // Method 1: simply load and let browser take care of ordering
     if (isAsync) {
 
-        api.js = function() {
+        api.load = function() {
 
             var args = arguments,
                  fn = args[args.length -1],
@@ -43,7 +47,7 @@
             each(args, function(el, i) {
 
                 if (el != fn) {
-                    el = getScript(el);
+                    el = getResource(el);
                     els[el.name] = el;
 
                     load(el, fn && i == args.length -2 ? function() {
@@ -60,7 +64,7 @@
     // Method 2: preload with text/cache hack
     } else {
 
-        api.js = function() {
+        api.load = function() {
 
             var args = arguments,
                 rest = [].slice.call(args, 1),
@@ -80,19 +84,19 @@
                 // load
                 each(rest, function(el) {
                     if (!isFunc(el)) {
-                        preload(getScript(el));
+                        preload(getResource(el));
                     }
                 });
 
                 // execute
-                load(getScript(args[0]), isFunc(next) ? next : function() {
+                load(getResource(args[0]), isFunc(next) ? next : function() {
                     api.js.apply(null, rest);
                 });
 
 
             // single script
             } else {
-                load(getScript(args[0]));
+                load(getResource(args[0]));
             }
 
             return api;
@@ -167,7 +171,7 @@
     }
 
 
-    function getScript(url) {
+    function getResource(url) {
 
         var script;
 
@@ -235,7 +239,7 @@
             script.state = PRELOADING;
             script.onpreload = [];
 
-            scriptTag({ src: script.url, type: 'cache'}, function()  {
+            tag({ src: script.url, type: 'cache'}, function()  {
                 onPreload(script);
             });
         }
@@ -259,7 +263,7 @@
 
         script.state = LOADING;
 
-        scriptTag(script.url, function() {
+        tag(script.url, function() {
 
             script.state = LOADED;
 
@@ -280,12 +284,21 @@
     }
 
 
-    function scriptTag(src, callback) {
-
-        var s = doc.createElement('script');
-        s.type = 'text/' + (src.type || 'javascript');
-        s.src = src.src || src;
-        s.async = false;
+    function tag(src, callback) {
+        if(!stylesheet.test(src.src || src)) {
+            var s = doc.createElement('script');
+            s.type = 'text/' + (src.type || 'javascript');
+            s.src = src.src || src;
+            s.async = false;
+        } else {
+            var s = doc.createElement('link'), numStylesheets;
+            s.rel = 'stylesheet';
+            s.href = src.src || src;
+            //mimic onload since link has no cross browser load event
+            setTimeout(function() {
+                s.onload();
+            }, 300);
+        }
 
         s.onreadystatechange = s.onload = function() {
 

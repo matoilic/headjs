@@ -1,11 +1,14 @@
 /**
-    Head JS     The only script in your <HEAD>
-    Copyright   Tero Piirainen (tipiirai)
-    License     MIT / http://bit.ly/mit-license
-    Version     0.96
-
-    http://headjs.com
-*/
+ * Head JS extended, the only script in your <HEAD>
+ *
+ * @version v0.10.0
+ * @author Mato Ilic <info@matoilic.ch>
+ * @author Tero Piirainen (tipiirai)
+ * @copyright 2012 Mato Ilic, Tero Piirainen
+ *
+ * Licensed under the MIT license:
+ * http://www.opensource.org/licenses/mit-license.php
+ */
 (function() {
     /*
         To add a new test:
